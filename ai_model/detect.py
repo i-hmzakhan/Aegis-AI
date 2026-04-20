@@ -2,7 +2,7 @@ import json
 import cv2
 from ultralytics import YOLO
 
-#Just trying to commit a change.
+
 
 def run_detection():
     # 1. Load the pre-trained YOLOv8 model
