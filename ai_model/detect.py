@@ -1,68 +1,42 @@
-import json
 import cv2
 from ultralytics import YOLO
+import requests
+import json
 
 
+def run_inventory_scan(image_path):
+    # 1. Load your custom weights
+    model = YOLO('ai_model/best.pt')
 
-def run_detection():
-    # 1. Load the pre-trained YOLOv8 model
-    # 'yolov8n.pt' is the lightweight version, perfect for real-time testing
-    model = YOLO('ai_model/yolov8n.pt') 
+    # 2. Run Inference
+    results = model.predict(source=image_path, conf=0.25)
 
-    # 2. Initialize the Camera (External Ingress)
-    cap = cv2.VideoCapture(0)
+    for result in results:
+        detections = []
+        for box in result.boxes:
+            det = {
+                "class": result.names[int(box.cls[0])],
+                "confidence": round(float(box.conf[0]), 2),
+                "bbox": [round(float(x), 1) for x in box.xyxy[0].tolist()]
+            }
+            detections.append(det)
 
-    if not cap.isOpened():
-        print("Error: Could not open camera.")
-        return
+        # 3. Create the Payload
+        payload = {
+            "total_items": len(detections),
+            "items": detections
+        }
 
-    print("AI Ingress Active. Press 'q' to capture item and generate JSON...")
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        # Show the camera feed to the user
-        cv2.imshow('AI Inventory Scanner', frame)
-
-        # Wait for the user to press 'q' to "Scan" the item
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            # Perform inference on the captured frame
-            results = model(frame)
-
-            for result in results:
-                # Check if any objects were detected
-                if len(result.boxes) > 0:
-                    # Get the top detected item's label
-                    class_id = int(result.boxes.cls[0].item())
-                    detected_name = result.names[class_id]
-                    confidence = round(float(result.boxes.conf[0].item()), 2)
-
-                    # 3. Create the 'Unique Specifications' Payload
-                    # This matches the JSON structure required by your database layer
-                    specs = {
-                        "item_type": detected_name,
-                        "confidence": confidence,
-                        "scanner_id": "Station_01",
-                        "status": "detected"
-                    }
-
-                    # 4. JSON Serialization (The Payload)
-                    # This string is what Python will eventually send to PHP
-                    json_payload = json.dumps(specs)
-                    
-                    print("\n--- AI PAYLOAD GENERATED ---")
-                    print(json_payload)
-                    print("----------------------------\n")
-                else:
-                    print("No object detected. Try again.")
-            
-            break
-
-    # Cleanup
-    cap.release()
-    cv2.destroyAllWindows()
+        # 4. Push to the PHP Bridge (The Ingress)
+        url = "http://localhost/smart_inventory/api/upload_scan.php"
+        headers = {'Content-Type': 'application/json'}
+        
+        try:
+            response = requests.post(url, data=json.dumps(payload), headers=headers)
+            print(f"Server Response: {response.text}")
+        except Exception as e:
+            print(f"Connection Failed: {e}")
 
 if __name__ == "__main__":
-    run_detection()
+    # Test with your grocery image
+    run_inventory_scan('ai_model\image.png')
