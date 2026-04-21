@@ -1,57 +1,130 @@
 <?php
+session_start();
 require_once 'db_config.php';
 
-// 1. Executive Summary Metrics
-$total_scans = $pdo->query("SELECT COUNT(*) FROM malware_reports")->fetchColumn();
-$critical_threats = $pdo->query("SELECT COUNT(*) FROM malware_reports WHERE threat_level = 'CRITICAL'")->fetchColumn();
-$avg_entropy = $pdo->query("SELECT AVG(entropy_score) FROM malware_reports")->fetchColumn();
+// 1. HANDLE LOGIN
+if (isset($_POST['login'])) {
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? AND password = ?");
+    $stmt->execute([$_POST['user'], $_POST['pass']]);
+    $user = $stmt->fetch();
 
-// 2. Fetch the Forensic Reports
-$stmt = $pdo->query("SELECT r.*, f.num_strings, f.import_count, f.section_count 
+    if ($user) {
+        $_SESSION['user_id'] = $user['user_id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['role'] = $user['role'];
+    } else {
+        $error = "Invalid credentials!";
+    }
+}
+
+// 2. HANDLE LOGOUT
+if (isset($_GET['logout'])) {
+    session_destroy();
+    header("Location: index.php");
+}
+
+// 3. SHOW LOGIN FORM IF NOT LOGGED IN
+if (!isset($_SESSION['user_id'])): ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Malware Warehouse Login</title>
+    <style>
+        body { background: #0f0f0f; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .login-card { background: #1a1a1a; padding: 40px; border-radius: 8px; border: 1px solid #00ffcc; text-align: center; }
+        input { display: block; width: 100%; margin: 10px 0; padding: 10px; background: #222; border: 1px solid #444; color: white; }
+        button { background: #00ffcc; color: black; border: none; padding: 10px 20px; cursor: pointer; width: 100%; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2>🛡️ Forensic Vault Access</h2>
+        <form method="POST">
+            <input type="text" name="user" placeholder="Username" required>
+            <input type="password" name="pass" placeholder="Password" required>
+            <button type="submit" name="login">Enter System</button>
+        </form>
+        <?php if(isset($error)) echo "<p style='color:red'>$error</p>"; ?>
+    </div>
+</body>
+</html>
+<?php exit(); endif; ?>
+
+<?php
+# Fetch the latest 10 reports with their features for display on the dashboard
+$stmt = $pdo->query("SELECT r.*, f.full_feature_json 
                      FROM malware_reports r 
-                     JOIN malware_features f ON r.report_id = f.report_id 
+                     LEFT JOIN malware_features f ON r.report_id = f.report_id 
                      ORDER BY r.captured_at DESC LIMIT 10");
 $reports = $stmt->fetchAll();
 ?>
-
-<div class="container">
-    <h1>🛡️ Malware Forensic Warehouse</h1>
-    
-    <div class="analytics-row" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;">
-        <div class="stat-box" style="border-bottom: 3px solid #ff3366;">
-            <div class="label">Total Samples</div>
-            <div class="value"><?php echo $total_scans; ?></div>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Forensic Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; padding: 40px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 20px; }
+        .role-badge { padding: 5px 10px; border-radius: 4px; font-size: 0.8em; background: <?php echo $_SESSION['role'] == 'root' ? '#ff3366' : '#00ffcc'; ?>; color: black; }
+        .scan-card { background: #1a1a1a; padding: 20px; margin-top: 20px; border-radius: 8px; border-left: 5px solid #444; }
+        .mgmt-link { color: #ffcc00; font-weight: bold; text-decoration: none; border: 1px solid #ffcc00; padding: 10px; border-radius: 4px; }
+        .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #0a0a0a; padding: 15px; margin-top: 10px; border-radius: 5px;font-size: 0.85em;display: none; /* Hidden by default */}
+        .feature-item { color: #888; border-bottom: 1px solid #222; padding: 2px; }
+        .feature-item span { color: #00ffcc; float: right; }
+        .toggle-btn { background: none; border: 1px solid #444; color: #888; padding: 5px 10px; cursor: pointer; border-radius: 4px; transition: 0.3s; }
+        .toggle-btn:hover { border-color: #00ffcc; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>📦 Forensic Intelligence Dashboard</h1>
+            <p>Welcome, <strong><?php echo $_SESSION['username']; ?></strong> <span class="role-badge"><?php echo strtoupper($_SESSION['role']); ?></span></p>
         </div>
-        <div class="stat-box" style="border-bottom: 3px solid #ffcc00;">
-            <div class="label">Avg Entropy</div>
-            <div class="value"><?php echo round($avg_entropy, 2); ?></div>
-        </div>
-        <div class="stat-box" style="border-bottom: 3px solid #00ffcc;">
-            <div class="label">Critical Threats</div>
-            <div class="value"><?php echo $critical_threats; ?></div>
+        <div>
+            <?php if ($_SESSION['role'] === 'root'): ?>
+                <a href="manage_reports.php" class="mgmt-link">⚙️ Root CRUD Panel</a>
+            <?php endif; ?>
+            <a href="?logout=1" style="color: #888; margin-left: 20px;">Logout</a>
         </div>
     </div>
 
-    <?php foreach ($reports as $report): ?>
-        <div class="scan-card" style="border-left: 5px solid <?php echo $report['threat_level'] == 'CRITICAL' ? '#ff3366' : '#ffcc00'; ?>">
-            <div class="stats">
-                <span style="color: #ff3366;">[<?php echo $report['threat_level']; ?>]</span>
-                <span>SHA-256: <small><?php echo substr($report['sha256_hash'], 0, 16); ?>...</small></span>
-                <span>Prob: <?php echo round($report['malware_probability'] * 100, 1); ?>%</span>
+    <div class="main-content">
+        <?php foreach ($reports as $r): 
+            $features = json_decode($r['full_feature_json'], true);
+        ?>
+            <div class="scan-card">
+                <div style="float: right;">
+                    <button class="toggle-btn" onclick="toggleFeatures(<?php echo $r['report_id']; ?>)">🧬 View Heuristic DNA</button>
+                </div>
+                <span style="color: #888;">SHA-256: <?php echo substr($r['sha256_hash'], 0, 32); ?>...</span>
+                <h3>File: <?php echo $r['file_name']; ?></h3>
+                <p>Status: <strong style="color: <?php echo $r['threat_level'] == 'CRITICAL' ? '#ff3366' : '#00ffcc'; ?>"><?php echo $r['threat_level']; ?></strong> | Entropy: <?php echo round($r['entropy_score'], 2); ?></p>
+
+                <div id="features-<?php echo $r['report_id']; ?>" class="feature-grid">
+                    <?php if ($features && is_array($features)): ?>
+                        <?php foreach ($features as $name => $value): ?>
+                            <div class="feature-item">
+                                <?php echo $name; ?>: <span><?php echo is_numeric($value) ? round($value, 4) : $value; ?></span>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <p>No feature data available for this record.</p>
+                    <?php endif; ?>
+                </div>
             </div>
-            <h3>File: <?php echo $report['file_name']; ?></h3>
-            
-            <table>
-                <tr>
-                    <th>Entropy</th><th>Strings</th><th>Imports</th><th>Sections</th>
-                </tr>
-                <tr>
-                    <td><?php echo $report['entropy_score']; ?></td>
-                    <td><?php echo $report['num_strings']; ?></td>
-                    <td><?php echo $report['import_count']; ?></td>
-                    <td><?php echo $report['section_count']; ?></td>
-                </tr>
-            </table>
-        </div>
-    <?php endforeach; ?>
-</div>
+        <?php endforeach; ?>
+
+        <script>
+        function toggleFeatures(id) {
+            var x = document.getElementById("features-" + id);
+            if (x.style.display === "grid") {
+                x.style.display = "none";
+            } else {
+                x.style.display = "grid";
+            }
+        }
+        </script>
+    </div>
+</body>
+</html>
