@@ -1,5 +1,6 @@
 <?php
 
+# Session Cookies
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_lifetime', 0);
     ini_set('session.gc_maxlifetime', 0);
