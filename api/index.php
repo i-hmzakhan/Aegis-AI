@@ -113,7 +113,16 @@ $reports = $stmt->fetchAll();
                     <?php endif; ?>
                 </div>
             </div>
+            
         <?php endforeach; ?>
+        <div class="form-section" style="border: 1px solid #00ffcc; padding: 20px; border-radius: 8px;">
+            <h3>☣️ Live Malware Triage Station</h3>
+            <form action="process_scan.php" method="POST" enctype="multipart/form-data">
+                <label>Select PE Binary (.exe) for AI Analysis:</label><br><br>
+                <input type="file" name="malware_sample" required>
+                <button type="submit" class="btn-add">Run V3 Engine</button>
+            </form>
+        </div>
 
         <script>
         function toggleFeatures(id) {
