@@ -4,7 +4,7 @@ require_once 'db_config.php';
 // 1. SECURITY CHECK
 session_start();
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'root') {
-    die("⛔ Access Denied: This area requires Root privileges.");
+    die("Access Denied: This area requires Root privileges.");
 }
 
 // 2. CREATE (Manual Ingest)
