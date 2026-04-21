@@ -21,21 +21,31 @@ def run_inventory_scan(image_path):
             detections.append(det)
 
         # 3. Create the Payload
+        # Note: We calculate top_confidence here for the PHP dashboard badge
+        top_conf = max([d['confidence'] for d in detections]) if detections else 0
+        
         payload = {
             "total_items": len(detections),
+            "top_confidence": top_conf,
             "items": detections
         }
 
-        # 4. Push to the PHP Bridge (The Ingress)
+        # 4. Push to the PHP Bridge using Multipart
         url = "http://localhost/smart_inventory/api/upload_scan.php"
-        headers = {'Content-Type': 'application/json'}
         
         try:
-            response = requests.post(url, data=json.dumps(payload), headers=headers)
-            print(f"Server Response: {response.text}")
+            # We open the image file in binary mode
+            with open(image_path, 'rb') as img_file:
+                # 'files' sends the binary, 'data' sends the JSON as a string
+                files = {'image': img_file}
+                data = {'json_data': json.dumps(payload)}
+                
+                # Removing custom headers; requests sets 'multipart/form-data' automatically
+                response = requests.post(url, files=files, data=data)
+                print(f"Server Response: {response.text}")
         except Exception as e:
             print(f"Connection Failed: {e}")
 
 if __name__ == "__main__":
-    # Test with your grocery image
-    run_inventory_scan('ai_model\image.png')
+    # Ensure this path is correct for your local setup
+    run_inventory_scan('ai_model/image.png')

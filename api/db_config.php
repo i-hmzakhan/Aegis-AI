@@ -1,6 +1,6 @@
 <?php
-$host = '127.0.0.1:3307'; // Using the IP instead of 'localhost' is more stable in XAMPP
-$db   = 'smart_inventory';
+$host = '127.0.0.1:3307'; 
+$db   = 'malware_db';
 $user = 'inventory_app';
 $pass = 'HSk555';
 $charset = 'utf8mb4';

@@ -205,3 +205,12 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Restricting git from uploading unnecessary files to Github, such as: scaled_features_v3.json
+scaled_features_v3.json
+uploads/1776710065_image.png
+uploads/1776710282_image.png
+uploads/1776710577_image.png
+uploads/1776710246_image.png
+ai_model/test_image.png
+ai_model/image.png
