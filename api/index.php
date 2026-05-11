@@ -52,8 +52,7 @@ $stmt = $pdo->query("SELECT r.*, f.full_feature_json FROM malware_reports r
                      WHERE r.is_archived = 0
                      ORDER BY r.captured_at DESC LIMIT 10");
 $reports = $stmt->fetchAll();
-
-
+?>
 
 <!DOCTYPE html>
 <html lang="en">
