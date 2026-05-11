@@ -53,10 +53,7 @@ $stmt = $pdo->query("SELECT r.*, f.full_feature_json FROM malware_reports r
                      ORDER BY r.captured_at DESC LIMIT 10");
 $reports = $stmt->fetchAll();
 
-# UPDATE: Get the archive count for the sidebar badge
-$archiveCountStmt = $pdo->query("SELECT COUNT(*) FROM malware_reports WHERE is_archived = 1");
-$archiveCount = $archiveCountStmt->fetchColumn();
-?>
+
 
 <!DOCTYPE html>
 <html lang="en">

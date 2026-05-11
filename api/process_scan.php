@@ -33,10 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['malware_sample'])) {
             $feature_json = json_encode($features);
 
             if ($feature_json === false || $feature_json === "null") {
-                die("❌ JSON Encode Error: " . json_last_error_msg());
+                die("JSON Encode Error: " . json_last_error_msg());
             }
 
-            // --- 🧠 THE "PAST RECORDS" INTELLIGENCE LOGIC ---
+            // ---  THE "PAST RECORDS" INTELLIGENCE LOGIC ---
             // Check if we already have this file and if a human manually set the level
             $checkStmt = $pdo->prepare("SELECT threat_level FROM malware_reports WHERE sha256_hash = ?");
             $checkStmt->execute([$file_hash]);
