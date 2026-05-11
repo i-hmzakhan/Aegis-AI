@@ -1,0 +1,177 @@
+/* --- AEGIS-AI GLOBAL HUD THEME --- */
+:root {
+    --bg-dark: #09090b;
+    --sidebar-bg: #070708;
+    --panel-bg: rgba(18, 18, 22, 0.85);
+    --electric-blue: #00d4ff;
+    --critical-red: #ff4d4d;
+    --clean-green: #10b981;
+    --border-gray: #1f1f23;
+    --font-main: 'Inter', sans-serif;
+    --font-mono: 'Fira Code', monospace;
+}
+
+body { 
+    background-color: var(--bg-dark);
+    background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.02) 1px, transparent 0);
+    background-size: 32px 32px; /* Forensic Grid */
+    color: #e6e6e6; 
+    font-family: var(--font-main); 
+    margin: 0; 
+    display: flex;
+    overflow-x: hidden;
+}
+
+/* --- SIDEBAR: COMMAND CENTER --- */
+.sidebar { 
+    width: 260px; height: 100vh; background: var(--sidebar-bg); 
+    border-right: 1px solid var(--border-gray); position: fixed; 
+    padding: 40px 24px; box-sizing: border-box; 
+    z-index: 100;
+}
+.sidebar-brand { 
+    font-size: 11px; font-family: var(--font-mono); 
+    color: var(--electric-blue); letter-spacing: 4px; 
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
+    margin-bottom: 50px;
+}
+.nav-link { 
+    color: #71717a; text-decoration: none; display: block; 
+    padding: 12px 0; font-size: 0.85em; transition: 0.3s; 
+    letter-spacing: 1px;
+}
+.nav-link:hover, .nav-link.active { color: #fff; text-shadow: 0 0 8px rgba(255,255,255,0.2); }
+
+/* --- MAIN CONTENT & HUD PANELS --- */
+.main { margin-left: 260px; width: calc(100% - 260px); padding: 50px; box-sizing: border-box; }
+
+.glass-panel { 
+    background: var(--panel-bg); 
+    border: 1px solid #27272a; 
+    border-radius: 12px; 
+    backdrop-filter: blur(12px); 
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+/* --- THE LASER SCANNER --- */
+.scan-line {
+    position: absolute;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--electric-blue), transparent);
+    box-shadow: 0 0 15px var(--electric-blue);
+    top: 0; left: 0;
+    animation: laser-move 4s infinite linear;
+    opacity: 0.5;
+    pointer-events: none;
+    z-index: 5;
+}
+
+@keyframes laser-move {
+    0% { top: -2%; }
+    100% { top: 102%; }
+}
+
+/* --- DNA MATRIX NODES --- */
+.dna-grid { 
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
+    gap: 12px; padding: 25px; 
+}
+.dna-node { 
+    background: #141417; 
+    border: 1px solid #27272a; 
+    padding: 12px; 
+    border-radius: 6px; 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* NEW: Ensure container handles child overflow */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 60px;
+}
+
+.dna-label { 
+    font-size: 9px; 
+    color: #52525b; 
+    font-family: var(--font-mono); 
+    text-transform: uppercase;
+    /* NEW: Truncate long names with an ellipsis (...) */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    width: 100%;
+}
+
+/* Tooltip on hover to show the full name if it's truncated */
+.dna-node:hover .dna-label {
+    white-space: normal;
+    overflow: visible;
+    color: var(--electric-blue);
+    word-break: break-all;
+}
+.dna-node:hover { 
+    border-color: var(--electric-blue); 
+    background: #18181b;
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0, 212, 255, 0.1);
+}
+.dna-value { font-size: 12px; color: var(--electric-blue); font-family: var(--font-mono); margin-top: 4px; }
+
+/* --- STATUS INDICATORS --- */
+.status-badge { 
+    padding: 4px 10px; border-radius: 4px; font-size: 0.75em; 
+    font-family: var(--font-mono); font-weight: 600;
+}
+.status-CRITICAL { 
+    background: rgba(255, 77, 77, 0.1); color: var(--critical-red); 
+    border: 1px solid var(--critical-red);
+    animation: critical-glow 2s infinite ease-in-out;
+}
+.status-CLEAN { background: rgba(16, 185, 129, 0.1); color: var(--clean-green); border: 1px solid var(--clean-green); }
+
+@keyframes critical-glow {
+    0%, 100% { box-shadow: 0 0 0px rgba(255, 77, 77, 0); }
+    50% { box-shadow: 0 0 10px rgba(255, 77, 77, 0.4); }
+}
+
+/* --- INTERACTIVE DROPZONE --- */
+.drop-zone { 
+    border: 2px dashed #27272a; padding: 60px; text-align: center; 
+    border-radius: 12px; transition: 0.3s; cursor: pointer;
+    background: rgba(255,255,255,0.01);
+}
+.drop-zone:hover { border-color: var(--electric-blue); background: rgba(0, 212, 255, 0.03); }
+
+/* Specific override for the Login Page to center the card */
+body.login-page {
+    display: flex;
+    justify-content: center; /* Centers horizontally */
+    align-items: center;     /* Centers vertically */
+    height: 100vh;
+    margin: 0;
+    width: 100vw;
+}
+
+/* Ensure the login panel doesn't try to respect the 260px sidebar margin */
+body.login-page .glass-panel {
+    margin-left: 0 !important; 
+    z-index: 100;
+}
+
+.hud-input {
+    background: #0d0d0f;
+    border: 1px solid #27272a;
+    color: #eee;
+    padding: 10px;
+    font-size: 0.8em;
+    font-family: 'Fira Code';
+    border-radius: 4px;
+}
+.hud-input:focus {
+    border-color: #ffcc00;
+    outline: none;
+}
